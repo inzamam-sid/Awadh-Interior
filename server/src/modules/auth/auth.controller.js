@@ -1,3 +1,5 @@
+import User from "./user.model.js";
+
 import {
   setupOwner,
   login,
@@ -7,6 +9,8 @@ import {
   setupOwnerSchema,
   loginSchema,
 } from "./auth.validation.js";
+
+import ApiError from "../../utils/api-error.js";
 
 export const setupOwnerController = async (
   req,
@@ -56,6 +60,43 @@ export const loginController = async (
       data: {
         accessToken: result.accessToken,
         user: result.user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getMeController = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const user = await User.findOne({
+      _id: req.user.userId,
+      organizationId: req.user.organizationId,
+    });
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "USER_NOT_FOUND",
+        "User not found."
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        organizationId: user.organizationId,
+        avatar: user.avatar,
       },
     });
   } catch (error) {
