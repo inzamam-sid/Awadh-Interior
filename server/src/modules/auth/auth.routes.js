@@ -4,6 +4,8 @@ import {
   setupOwnerController,
   loginController,
   getMeController,
+  refreshController,
+  logoutController,
 } from "./auth.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
@@ -25,11 +27,23 @@ router.post(
   loginController
 );
 
+router.post(
+  "/refresh",
+  refreshController
+);
+
+router.post(
+  "/logout",
+  logoutController
+);
+
 router.get(
   "/me",
   authMiddleware,
   requirePermission(PERMISSIONS.USER_VIEW),
   getMeController
 );
+
+
 
 export default router;
