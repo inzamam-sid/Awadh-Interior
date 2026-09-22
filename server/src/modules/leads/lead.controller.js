@@ -4,6 +4,7 @@ import {
   getLeadById,
   updateLead,
   deleteLead,
+  convertLeadToCustomer,
 } from "./lead.service.js";
 
 import {
@@ -152,6 +153,30 @@ export const deleteLeadController =
       });
 
       res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  export const convertLeadController =
+  async (req, res, next) => {
+    try {
+      const result =
+        await convertLeadToCustomer({
+          organizationId:
+            req.user.organizationId,
+
+          userId:
+            req.user.userId,
+
+          leadId:
+            req.params.id,
+        });
+
+      res.status(201).json({
+        success: true,
+        data: result,
+      });
     } catch (error) {
       next(error);
     }

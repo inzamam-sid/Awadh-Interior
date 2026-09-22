@@ -6,11 +6,14 @@ import {
   getLeadController,
   updateLeadController,
   deleteLeadController,
+    convertLeadController,
 } from "./lead.controller.js";
 
 import authMiddleware from "../../middleware/auth.middleware.js";
 
-import requirePermission from "../../middleware/permission.middleware.js";
+import requirePermission, {
+  requireAllPermissions,
+} from "../../middleware/permission.middleware.js";
 
 import { PERMISSIONS } from "../../config/permissions.js";
 
@@ -24,6 +27,15 @@ router.get(
     PERMISSIONS.LEAD_VIEW
   ),
   getLeadsController
+);
+
+router.post(
+  "/:id/convert",
+  requireAllPermissions([
+    PERMISSIONS.LEAD_UPDATE,
+    PERMISSIONS.CUSTOMER_CREATE,
+  ]),
+  convertLeadController
 );
 
 router.get(

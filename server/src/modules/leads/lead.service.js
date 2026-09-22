@@ -1,5 +1,6 @@
 import Lead from "./lead.model.js";
 import ApiError from "../../utils/api-error.js";
+import Customer from "../customers/customer.model.js";
 
 export const createLead = async ({
   organizationId,
@@ -170,3 +171,97 @@ export const deleteLead = async ({
 
   return lead;
 };
+
+export const convertLeadToCustomer =
+  async ({
+    organizationId,
+    userId,
+    leadId,
+  }) => {
+    // Find the lead inside the
+    // authenticated organization.
+    const lead = await Lead.findOne({
+      _id: leadId,
+      organizationId,
+    });
+
+    if (!lead) {
+      throw new ApiError(
+        404,
+        "LEAD_NOT_FOUND",
+        "Lead not found."
+      );
+    }
+
+    // Prevent duplicate conversion.
+    if (lead.convertedCustomerId) {
+      throw new ApiError(
+        409,
+        "LEAD_ALREADY_CONVERTED",
+        "This lead has already been converted."
+      );
+    }
+
+    // A lost lead should not become
+    // a customer.
+    if (lead.status === "LOST") {
+      throw new ApiError(
+        400,
+        "INVALID_LEAD_STATUS",
+        "A lost lead cannot be converted into a customer."
+      );
+    }
+
+    // Create the customer using
+    // information already collected
+    // from the lead.
+    const customer =
+      await Customer.create({
+        organizationId,
+
+        name: lead.name,
+
+        phone: lead.phone,
+
+        email: lead.email,
+
+        address: {
+          street:
+            lead.property?.address || "",
+
+          city:
+            lead.property?.city || "",
+
+          state:
+            lead.property?.state || "",
+        },
+
+        propertyType:
+          lead.property?.type || "",
+
+        source:
+          lead.source || "",
+
+        notes:
+          lead.notes ||
+          lead.requirement?.description ||
+          "",
+
+        createdBy: userId,
+      });
+
+    // Mark the lead as converted.
+    lead.status = "WON";
+
+    lead.convertedCustomerId =
+      customer._id;
+
+    lead.updatedBy = userId;
+
+    await lead.save();
+
+    return {
+      lead,
+      customer,
+    };
+  };
