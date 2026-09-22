@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./modules/auth/auth.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import leadRoutes from "./modules/leads/lead.routes.js";
+import customerRoutes from "./modules/customers/customer.routes.js";
 
 const app = express();
 
@@ -26,6 +27,11 @@ app.use(
 app.use(
   "/api/v1/leads",
   leadRoutes
+);
+
+app.use(
+  "/api/v1/customers",
+  customerRoutes
 );
 
 app.use(errorMiddleware);
