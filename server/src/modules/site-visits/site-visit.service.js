@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import SiteVisit from "./site-visit.model.js";
 import Lead from "../leads/lead.model.js";
 import Customer from "../customers/customer.model.js";
+import Organization from "../organizations/organization.model.js";
 
 import ApiError from "../../utils/api-error.js";
 
@@ -287,6 +288,8 @@ export const getSiteVisitById =
     return siteVisit;
   };
 
+
+
   export const deleteSiteVisit =
   async ({
     organizationId,
@@ -319,4 +322,78 @@ export const getSiteVisitById =
     }
 
     return siteVisit;
+  };
+
+  export const createPublicSiteVisit =
+  async (data) => {
+    const organization =
+      await Organization.findOne({
+        slug:
+          process.env.ORGANIZATION_SLUG,
+        isActive: true,
+      });
+
+    if (!organization) {
+      throw new ApiError(
+        500,
+        "ORGANIZATION_NOT_CONFIGURED",
+        "Public booking is not configured."
+      );
+    }
+
+    const lead =
+      await Lead.create({
+        organizationId:
+          organization._id,
+
+        name: data.name,
+
+        phone: data.phone,
+
+        email: data.email || "",
+
+        source: "WEBSITE",
+
+        status: "SITE_VISIT",
+
+        requirement: {
+          description:
+            data.requirement || "",
+        },
+
+        property: {
+          type:
+            data.propertyType || "",
+
+          address:
+            data.address?.street || "",
+
+          city:
+            data.address?.city || "",
+
+          state:
+            data.address?.state || "",
+        },
+      });
+
+    const siteVisit =
+      await SiteVisit.create({
+        organizationId:
+          organization._id,
+
+        leadId: lead._id,
+
+        scheduledAt:
+          new Date(data.scheduledAt),
+
+        address:
+          data.address || {},
+
+        status: "SCHEDULED",
+      });
+
+    return {
+      lead,
+      siteVisit,
+    };
   };

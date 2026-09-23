@@ -4,12 +4,17 @@ import {
   getSiteVisitById,
   updateSiteVisit,
   deleteSiteVisit,
+  createPublicSiteVisit,
 } from "./site-visit.service.js";
 
 import {
   createSiteVisitSchema,
   updateSiteVisitSchema,
 } from "./site-visit.validation.js";
+
+import {
+  publicSiteVisitSchema,
+} from "./site-visit.public.validation.js";
 
 
 export const createSiteVisitController =
@@ -157,6 +162,33 @@ export const deleteSiteVisitController =
       });
 
       res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  export const createPublicSiteVisitController =
+  async (req, res, next) => {
+    try {
+      const data =
+        publicSiteVisitSchema.parse(
+          req.body
+        );
+
+      const result =
+        await createPublicSiteVisit(
+          data
+        );
+
+      res.status(201).json({
+        success: true,
+        data: {
+          message:
+            "Your site visit request has been submitted successfully.",
+          siteVisitId:
+            result.siteVisit._id,
+        },
+      });
     } catch (error) {
       next(error);
     }
