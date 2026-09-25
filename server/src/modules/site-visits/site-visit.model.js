@@ -25,7 +25,7 @@ const siteVisitSchema = new mongoose.Schema(
 
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Employee",
       default: null,
       index: true,
     },

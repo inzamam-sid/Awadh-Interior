@@ -4,6 +4,7 @@ import SiteVisit from "./site-visit.model.js";
 import Lead from "../leads/lead.model.js";
 import Customer from "../customers/customer.model.js";
 import Organization from "../organizations/organization.model.js";
+import Employee from "../employees/employee.model.js";
 
 import ApiError from "../../utils/api-error.js";
 
@@ -46,15 +47,40 @@ export const createSiteVisit = async ({
     );
   }
 
-  if (data.assignedTo &&
+  if (data.assignedTo) {
+    if (
       !mongoose.Types.ObjectId.isValid(
         data.assignedTo
-      )) {
-    throw new ApiError(
-      400,
-      "INVALID_ASSIGNED_USER_ID",
-      "Invalid assigned user ID."
-    );
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "INVALID_EMPLOYEE_ID",
+        "Invalid employee ID."
+      );
+    }
+
+    const employee =
+      await Employee.findOne({
+        _id: data.assignedTo,
+        organizationId,
+      });
+
+    if (!employee) {
+      throw new ApiError(
+        404,
+        "EMPLOYEE_NOT_FOUND",
+        "Employee not found in this organization."
+      );
+    }
+
+    if (employee.status !== "ACTIVE") {
+      throw new ApiError(
+        400,
+        "EMPLOYEE_NOT_ACTIVE",
+        "Only active employees can be assigned."
+      );
+    }
   }
 
   if (data.leadId) {
@@ -152,7 +178,7 @@ export const getSiteVisits = async ({
         )
         .populate(
           "assignedTo",
-          "name email role"
+          "employeeCode name phone designation department status"
         )
         .sort({
           scheduledAt: 1,
@@ -208,7 +234,7 @@ export const getSiteVisitById =
         )
         .populate(
           "assignedTo",
-          "name email role"
+          "employeeCode name phone designation department status"
         );
 
     if (!siteVisit) {
@@ -229,6 +255,42 @@ export const getSiteVisitById =
     siteVisitId,
     data,
   }) => {
+    if (data.assignedTo) {
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          data.assignedTo
+        )
+      ) {
+        throw new ApiError(
+          400,
+          "INVALID_EMPLOYEE_ID",
+          "Invalid employee ID."
+        );
+      }
+
+      const employee =
+        await Employee.findOne({
+          _id: data.assignedTo,
+          organizationId,
+        });
+
+      if (!employee) {
+        throw new ApiError(
+          404,
+          "EMPLOYEE_NOT_FOUND",
+          "Employee not found in this organization."
+        );
+      }
+
+      if (employee.status !== "ACTIVE") {
+        throw new ApiError(
+          400,
+          "EMPLOYEE_NOT_ACTIVE",
+          "Only active employees can be assigned."
+        );
+      }
+    }
+
     if (
       !mongoose.Types.ObjectId.isValid(
         siteVisitId
@@ -275,7 +337,19 @@ export const getSiteVisitById =
           new: true,
           runValidators: true,
         }
-      );
+      )
+      .populate(
+      "assignedTo",
+      "employeeCode name phone designation department status"
+    )
+    .populate(
+      "leadId",
+      "name phone email status"
+    )
+    .populate(
+      "customerId",
+      "name phone email"
+    );
 
     if (!siteVisit) {
       throw new ApiError(
