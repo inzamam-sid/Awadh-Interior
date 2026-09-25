@@ -1,12 +1,50 @@
 import Lead from "./lead.model.js";
 import ApiError from "../../utils/api-error.js";
 import Customer from "../customers/customer.model.js";
+import mongoose from "mongoose";
+import Employee from "../employees/employee.model.js";
 
 export const createLead = async ({
   organizationId,
   userId,
   data,
 }) => {
+    if (data.assignedTo) {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        data.assignedTo
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "INVALID_EMPLOYEE_ID",
+        "Invalid employee ID."
+      );
+    }
+
+    const employee =
+      await Employee.findOne({
+        _id: data.assignedTo,
+        organizationId,
+      });
+
+    if (!employee) {
+      throw new ApiError(
+        404,
+        "EMPLOYEE_NOT_FOUND",
+        "Employee not found in this organization."
+      );
+    }
+
+    if (employee.status !== "ACTIVE") {
+      throw new ApiError(
+        400,
+        "EMPLOYEE_NOT_ACTIVE",
+        "Only active employees can be assigned."
+      );
+    }
+  }
+
   const lead = await Lead.create({
     organizationId,
     createdBy: userId,
@@ -72,7 +110,7 @@ export const getLeads = async ({
       Lead.find(filter)
         .populate(
           "assignedTo",
-          "name email role"
+          "employeeCode name phone designation department status"
         )
         .sort({
           createdAt: -1,
@@ -124,21 +162,60 @@ export const updateLead = async ({
   leadId,
   data,
 }) => {
-  const lead =
-    await Lead.findOneAndUpdate(
-      {
-        _id: leadId,
+  if (data.assignedTo) {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        data.assignedTo
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "INVALID_EMPLOYEE_ID",
+        "Invalid employee ID."
+      );
+    }
+
+    const employee =
+      await Employee.findOne({
+        _id: data.assignedTo,
         organizationId,
-      },
-      {
-        ...data,
-        updatedBy: userId,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+      });
+
+    if (!employee) {
+      throw new ApiError(
+        404,
+        "EMPLOYEE_NOT_FOUND",
+        "Employee not found in this organization."
+      );
+    }
+
+    if (employee.status !== "ACTIVE") {
+      throw new ApiError(
+        400,
+        "EMPLOYEE_NOT_ACTIVE",
+        "Only active employees can be assigned."
+      );
+    }
+  }
+
+  const lead =
+  await Lead.findOneAndUpdate(
+    {
+      _id: leadId,
+      organizationId,
+    },
+    {
+      ...data,
+      updatedBy: userId,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).populate(
+    "assignedTo",
+    "employeeCode name phone designation department status"
+  );
 
   if (!lead) {
     throw new ApiError(
