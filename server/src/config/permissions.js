@@ -41,6 +41,12 @@ export const PERMISSIONS = {
   TASK_UPDATE: "task:update",
   TASK_DELETE: "task:delete",
 
+  // Milestones
+  MILESTONE_VIEW: "milestone:view",
+  MILESTONE_CREATE: "milestone:create",
+  MILESTONE_UPDATE: "milestone:update",
+  MILESTONE_DELETE: "milestone:delete",
+
   // Quotations
   QUOTATION_VIEW: "quotation:view",
   QUOTATION_CREATE: "quotation:create",

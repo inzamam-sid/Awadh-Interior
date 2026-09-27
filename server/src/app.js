@@ -10,6 +10,7 @@ import publicSiteVisitRoutes from "./modules/site-visits/site-visit.public.route
 import employeeRoutes from "./modules/employees/employee.routes.js";
 import projectRoutes from "./modules/projects/project.routes.js";
 import taskRoutes from "./modules/tasks/task.routes.js";
+import milestoneRoutes from "./modules/milestones/milestone.routes.js";
 
 const app = express();
 
@@ -62,6 +63,11 @@ app.use(
 app.use(
   "/api/v1/tasks",
   taskRoutes
+);
+
+app.use(
+  "/api/v1/milestones",
+  milestoneRoutes
 );
 
 app.use(errorMiddleware);
