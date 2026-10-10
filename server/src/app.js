@@ -11,6 +11,7 @@ import employeeRoutes from "./modules/employees/employee.routes.js";
 import projectRoutes from "./modules/projects/project.routes.js";
 import taskRoutes from "./modules/tasks/task.routes.js";
 import milestoneRoutes from "./modules/milestones/milestone.routes.js";
+import progressRoutes from "./modules/progress/progress.routes.js";
 
 const app = express();
 
@@ -68,6 +69,11 @@ app.use(
 app.use(
   "/api/v1/milestones",
   milestoneRoutes
+);
+
+app.use(
+  "/api/v1/progress",
+  progressRoutes
 );
 
 app.use(errorMiddleware);
