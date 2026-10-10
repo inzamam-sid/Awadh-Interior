@@ -47,6 +47,12 @@ export const PERMISSIONS = {
   MILESTONE_UPDATE: "milestone:update",
   MILESTONE_DELETE: "milestone:delete",
 
+  // Progress
+  PROGRESS_VIEW: "progress:view",
+  PROGRESS_CREATE: "progress:create",
+  PROGRESS_UPDATE: "progress:update",
+  PROGRESS_DELETE: "progress:delete",
+
   // Quotations
   QUOTATION_VIEW: "quotation:view",
   QUOTATION_CREATE: "quotation:create",
