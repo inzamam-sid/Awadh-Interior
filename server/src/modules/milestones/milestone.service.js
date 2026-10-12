@@ -5,6 +5,56 @@ import Project from "../projects/project.model.js";
 
 import ApiError from "../../utils/api-error.js";
 
+
+const recalculateProjectProgress = async ({
+  organizationId,
+  projectId,
+}) => {
+  const milestones = await Milestone.find({
+    organizationId,
+    projectId,
+    status: { $ne: "SKIPPED" },
+  }).select("status");
+
+  const totalMilestones = milestones.length;
+
+  let progress = 0;
+
+  if (totalMilestones > 0) {
+    const totalPercentage = milestones.reduce(
+      (total, milestone) => {
+        if (milestone.status === "COMPLETED") {
+          return total + 100;
+        }
+
+        if (milestone.status === "IN_PROGRESS") {
+          return total + 50;
+        }
+
+        return total;
+      },
+      0
+    );
+
+    progress = Math.round(
+      totalPercentage / totalMilestones
+    );
+  }
+
+  await Project.updateOne(
+    {
+      _id: projectId,
+      organizationId,
+    },
+    {
+      $set: { progress },
+    }
+  );
+
+  return progress;
+};
+
+
 export const createMilestone = async ({
   organizationId,
   projectId,
@@ -78,6 +128,11 @@ export const createMilestone = async ({
     await Milestone.create(
       milestoneData
     );
+
+  await recalculateProjectProgress({
+      organizationId,
+      projectId,
+  });
 
   return milestone;
 };
@@ -249,6 +304,19 @@ export const getProjectMilestones =
         }
       );
 
+      if (!milestone) {
+        throw new ApiError(
+          404,
+          "MILESTONE_NOT_FOUND",
+          "Milestone not found."
+        );
+      }
+
+      await recalculateProjectProgress({
+        organizationId,
+        projectId: milestone.projectId,
+      });
+
     return milestone;
   };
 
@@ -270,6 +338,18 @@ export const getProjectMilestones =
         "Milestone not found."
       );
     }
+
+    const projectId = milestone.projectId;
+
+    await Milestone.deleteOne({
+      _id: milestoneId,
+      organizationId,
+    });
+
+    await recalculateProjectProgress({
+      organizationId,
+      projectId,
+    });
 
     return milestone;
   };
