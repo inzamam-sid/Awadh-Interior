@@ -54,11 +54,11 @@ export const PERMISSIONS = {
   PROGRESS_DELETE: "progress:delete",
 
   // Quotations
-  QUOTATION_VIEW: "quotation:view",
-  QUOTATION_CREATE: "quotation:create",
-  QUOTATION_UPDATE: "quotation:update",
-  QUOTATION_DELETE: "quotation:delete",
-  QUOTATION_SEND: "quotation:send",
+  QUOTATIONS_VIEW: "quotations:view",
+  QUOTATIONS_CREATE: "quotations:create",
+  QUOTATIONS_UPDATE: "quotations:update",
+  QUOTATIONS_DELETE: "quotations:delete",
+  QUOTATIONS_SEND: "quotations:send",
 
   // Invoices
   INVOICE_VIEW: "invoice:view",
