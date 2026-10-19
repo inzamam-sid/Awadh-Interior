@@ -15,6 +15,7 @@ import {
 import authMiddleware from "../../middleware/auth.middleware.js";
 import requirePermission from "../../middleware/permission.middleware.js";
 import { PERMISSIONS } from "../../config/permissions.js";
+import { downloadQuotationPdfController } from "./quotation-pdf.controller.js";
 
 const router = express.Router();
 
@@ -74,5 +75,13 @@ router.delete(
   requirePermission(PERMISSIONS.QUOTATIONS_DELETE),
   deleteQuotationController
 );
+
+
+router.get(
+  "/:id/pdf",
+  requirePermission(PERMISSIONS.QUOTATIONS_VIEW),
+  downloadQuotationPdfController
+);
+
 
 export default router;
