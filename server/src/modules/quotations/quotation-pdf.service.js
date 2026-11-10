@@ -2,6 +2,11 @@
 import PDFDocument from "pdfkit";
 import Quotation from "./quotation.model.js";
 import ApiError from "../../utils/api-error.js";
+import { fileURLToPath } from "url";
+
+const letterheadPath = fileURLToPath(
+  new URL("../../assets/awadh-letterhead.png", import.meta.url)
+);
 
 export const generateQuotationPdf = async ({
   organizationId,
@@ -25,12 +30,16 @@ export const generateQuotationPdf = async ({
 
   const doc = new PDFDocument({
     size: "A4",
-    margin: 45,
+    margins: {
+      top: 205,
+      bottom: 125,
+      left: 45,
+      right: 45,
+    },
     bufferPages: true,
     info: {
       Title: `Quotation ${quotation.quotationNumber}`,
       Author: "Awadh Interior",
-      Subject: "Interior work quotation",
     },
   });
 
@@ -43,82 +52,97 @@ export const generateQuotationPdf = async ({
     doc.on("error", reject);
   });
 
-  const pageWidth =
-    doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  // Draw the official letterhead on every page.
+  const drawLetterhead = () => {
+    doc.image(letterheadPath, 0, 0, {
+      width: doc.page.width,
+      height: doc.page.height,
+    });
+
+    doc.x = 45;
+    doc.y = 205;
+  };
+
+  doc.on("pageAdded", drawLetterhead);
+
+  // Draw the background on the first page.
+  drawLetterhead();
+
+  const pageWidth = doc.page.width - 90;
+  const bottomLimit = doc.page.height - 125;
+
+  const navy = "#071C3A";
+  const gold = "#B88632";
+  const textColor = "#263445";
 
   const formatMoney = (amount) =>
-    `INR ${Number(amount || 0).toLocaleString("en-IN", {
+    `Rs. ${Number(amount || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
 
-  const line = (y) => {
+  const formatDate = (date) =>
+    date ? new Date(date).toLocaleDateString("en-IN") : "-";
+
+  const drawLine = () => {
     doc
-      .moveTo(doc.page.margins.left, y)
-      .lineTo(doc.page.margins.left + pageWidth, y)
-      .strokeColor("#D9E2F0")
+      .moveTo(45, doc.y)
+      .lineTo(doc.page.width - 45, doc.y)
+      .strokeColor("#D6DCE5")
+      .lineWidth(0.7)
       .stroke();
   };
 
-  // Company heading
+  const checkSpace = (height) => {
+    if (doc.y + height > bottomLimit) {
+      doc.addPage();
+    }
+  };
+
+  // Quotation heading
   doc
-    .fillColor("#135EC1")
+    .fillColor(navy)
     .font("Helvetica-Bold")
-    .fontSize(24)
-    .text("AWADH INTERIOR");
-
-  doc
-    .fillColor("#4B5563")
-    .font("Helvetica")
-    .fontSize(10)
-    .text("Interior Design • POP • False Ceiling");
-
-  doc.moveDown(1.2);
-
-  line(doc.y);
-
-  doc.moveDown(1);
-
-  // Quotation heading and metadata
-  doc
-    .fillColor("#111827")
-    .font("Helvetica-Bold")
-    .fontSize(20)
+    .fontSize(18)
     .text("QUOTATION");
 
   doc.moveDown(0.5);
 
-  doc.fontSize(10).font("Helvetica");
+  doc
+    .font("Helvetica")
+    .fontSize(9)
+    .fillColor(textColor)
+    .text(`Quotation No: ${quotation.quotationNumber}`);
 
-  const quotationDate = quotation.createdAt
-    ? new Date(quotation.createdAt).toLocaleDateString("en-IN")
-    : new Date().toLocaleDateString("en-IN");
-
-  doc.text(`Quotation No: ${quotation.quotationNumber}`);
-  doc.text(`Date: ${quotationDate}`);
+  doc.text(`Date: ${formatDate(quotation.createdAt)}`);
 
   if (quotation.validUntil) {
-    doc.text(
-      `Valid Until: ${new Date(quotation.validUntil).toLocaleDateString("en-IN")}`
-    );
+    doc.text(`Valid Until: ${formatDate(quotation.validUntil)}`);
   }
 
   doc.moveDown(1);
 
-  // Customer and project details
+  // Customer details
   doc
     .font("Helvetica-Bold")
-    .fontSize(11)
-    .fillColor("#135EC1")
-    .text("CUSTOMER DETAILS");
+    .fontSize(10)
+    .fillColor(gold)
+    .text("BILL TO");
 
   doc.moveDown(0.4);
 
-  doc.font("Helvetica").fontSize(10).fillColor("#111827");
-
   const customer = quotation.customerId;
 
-  doc.text(`Name: ${customer?.name || "Customer"}`);
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(10)
+    .fillColor(navy)
+    .text(customer?.name || "Customer");
+
+  doc
+    .font("Helvetica")
+    .fontSize(9)
+    .fillColor(textColor);
 
   if (customer?.phone) {
     doc.text(`Phone: ${customer.phone}`);
@@ -143,7 +167,8 @@ export const generateQuotationPdf = async ({
   }
 
   if (quotation.projectId) {
-    doc.moveDown(0.5);
+    doc.moveDown(0.3);
+
     doc
       .font("Helvetica-Bold")
       .text(`Project: ${quotation.projectId.name}`);
@@ -157,123 +182,118 @@ export const generateQuotationPdf = async ({
 
   doc.moveDown(1);
 
-  // Item table
-  const columns = {
-    description: doc.page.margins.left,
-    quantity: doc.page.margins.left + pageWidth * 0.53,
-    rate: doc.page.margins.left + pageWidth * 0.68,
-    amount: doc.page.margins.left + pageWidth * 0.82,
-  };
+  // Items table
+  const tableX = 45;
+  const descriptionX = 51;
+  const quantityX = 295;
+  const rateX = 365;
+  const amountX = 450;
 
   const drawTableHeader = () => {
     const y = doc.y;
 
     doc
-      .rect(doc.page.margins.left, y, pageWidth, 25)
-      .fill("#135EC1");
+      .rect(tableX, y, pageWidth, 24)
+      .fill(navy);
 
     doc
-      .fillColor("#FFFFFF")
       .font("Helvetica-Bold")
-      .fontSize(9);
+      .fontSize(8)
+      .fillColor("#FFFFFF");
 
-    doc.text("Description", columns.description + 6, y + 8, {
-      width: pageWidth * 0.49,
+    doc.text("DESCRIPTION", descriptionX, y + 8, {
+      width: 225,
     });
 
-    doc.text("Qty", columns.quantity, y + 8, {
-      width: pageWidth * 0.12,
+    doc.text("QTY", quantityX, y + 8, {
+      width: 60,
       align: "right",
     });
 
-    doc.text("Rate", columns.rate, y + 8, {
-      width: pageWidth * 0.12,
+    doc.text("RATE", rateX, y + 8, {
+      width: 75,
       align: "right",
     });
 
-    doc.text("Amount", columns.amount, y + 8, {
-      width: pageWidth * 0.17,
+    doc.text("AMOUNT", amountX, y + 8, {
+      width: 95,
       align: "right",
     });
 
-    doc.y = y + 25;
+    doc.y = y + 24;
   };
 
   drawTableHeader();
 
-  doc.font("Helvetica").fontSize(9).fillColor("#111827");
+  quotation.items.forEach((item) => {
+    doc.font("Helvetica").fontSize(8);
 
-  for (const item of quotation.items) {
     const descriptionHeight = doc.heightOfString(
       item.description,
-      { width: pageWidth * 0.47 }
+      { width: 220 }
     );
 
-    const rowHeight = Math.max(27, descriptionHeight + 12);
+    const rowHeight = Math.max(28, descriptionHeight + 12);
 
-    if (doc.y + rowHeight > doc.page.height - 150) {
+    if (doc.y + rowHeight > bottomLimit) {
       doc.addPage();
       drawTableHeader();
-      doc.font("Helvetica").fontSize(9).fillColor("#111827");
-    }
-
-    const y = doc.y;
-
-    doc.text(item.description, columns.description + 6, y + 7, {
-      width: pageWidth * 0.47,
-    });
-
-    doc.text(
-      `${item.quantity} ${item.unit}`,
-      columns.quantity,
-      y + 7,
-      { width: pageWidth * 0.12, align: "right" }
-    );
-
-    doc.text(formatMoney(item.rate), columns.rate, y + 7, {
-      width: pageWidth * 0.12,
-      align: "right",
-    });
-
-    doc.text(formatMoney(item.amount), columns.amount, y + 7, {
-      width: pageWidth * 0.17,
-      align: "right",
-    });
-
-    doc.y = y + rowHeight;
-
-    line(doc.y);
-    doc.moveDown(0.3);
-  }
-
-  // Financial summary
-  doc.moveDown(0.7);
-
-  const summaryLabelX = doc.page.margins.left + pageWidth * 0.48;
-  const summaryValueX = doc.page.margins.left + pageWidth * 0.70;
-  const summaryWidth = pageWidth * 0.30;
-
-  const drawSummaryRow = (label, value, options = {}) => {
-    if (doc.y > doc.page.height - 100) {
-      doc.addPage();
     }
 
     const y = doc.y;
 
     doc
-      .font(options.bold ? "Helvetica-Bold" : "Helvetica")
-      .fontSize(options.size || 10)
-      .fillColor(options.color || "#111827")
-      .text(label, summaryLabelX, y, {
-        width: pageWidth * 0.22,
-      });
+      .font("Helvetica")
+      .fontSize(8)
+      .fillColor(textColor);
 
-    doc.text(value, summaryValueX, y, {
-      width: summaryWidth,
+    doc.text(item.description, descriptionX, y + 8, {
+      width: 220,
+    });
+
+    doc.text(`${item.quantity} ${item.unit}`, quantityX, y + 8, {
+      width: 60,
       align: "right",
     });
 
-    doc.y = y + 20;
+    doc.text(formatMoney(item.rate), rateX, y + 8, {
+      width: 75,
+      align: "right",
+    });
+
+    doc.text(formatMoney(item.amount), amountX, y + 8, {
+      width: 95,
+      align: "right",
+    });
+
+    doc.y = y + rowHeight;
+    drawLine();
+    doc.moveDown(0.3);
+  });
+
+  // Financial summary
+  checkSpace(105);
+
+  doc.moveDown(0.5);
+
+  const drawSummaryRow = (label, value, bold = false) => {
+    const y = doc.y;
+
+    doc
+      .font(bold ? "Helvetica-Bold" : "Helvetica")
+      .fontSize(bold ? 11 : 9)
+      .fillColor(bold ? navy : textColor);
+
+    doc.text(label, 300, y, {
+      width: 110,
+    });
+
+    doc.text(value, 410, y, {
+      width: 130,
+      align: "right",
+    });
+
+    doc.y = y + 19;
   };
 
   drawSummaryRow("Subtotal", formatMoney(quotation.subtotal));
@@ -285,64 +305,63 @@ export const generateQuotationPdf = async ({
     formatMoney(quotation.taxAmount)
   );
 
-  line(doc.y);
-
+  drawLine();
   doc.moveDown(0.5);
 
-  drawSummaryRow("GRAND TOTAL", formatMoney(quotation.total), {
-    bold: true,
-    size: 13,
-    color: "#135EC1",
-  });
+  drawSummaryRow(
+    "GRAND TOTAL",
+    formatMoney(quotation.total),
+    true
+  );
 
   // Terms and conditions
   if (quotation.terms) {
-    if (doc.y > doc.page.height - 120) {
-      doc.addPage();
-    }
+    const termsHeight = doc.heightOfString(quotation.terms, {
+      width: pageWidth,
+      font: "Helvetica",
+      fontSize: 8,
+    });
+
+    checkSpace(termsHeight + 40);
 
     doc.moveDown(1);
 
     doc
       .font("Helvetica-Bold")
-      .fontSize(11)
-      .fillColor("#135EC1")
+      .fontSize(10)
+      .fillColor(gold)
       .text("TERMS & CONDITIONS");
 
     doc.moveDown(0.4);
 
     doc
       .font("Helvetica")
-      .fontSize(9)
-      .fillColor("#374151")
+      .fontSize(8)
+      .fillColor(textColor)
       .text(quotation.terms, {
         width: pageWidth,
         lineGap: 3,
       });
   }
 
-  // Footer on every page
-  const range = doc.bufferedPageRange();
+  // Signature section
+  checkSpace(65);
 
-  for (let i = range.start; i < range.start + range.count; i++) {
-    doc.switchToPage(i);
+  doc.moveDown(2);
 
-    const footerY = doc.page.height - 35;
+  doc
+    .font("Helvetica")
+    .fontSize(9)
+    .fillColor(textColor)
+    .text("Authorized Signature", 360, doc.y, {
+      width: 180,
+      align: "center",
+    });
 
-    doc
-      .font("Helvetica")
-      .fontSize(8)
-      .fillColor("#6B7280")
-      .text(
-        "Thank you for considering Awadh Interior.",
-        doc.page.margins.left,
-        footerY,
-        {
-          width: pageWidth,
-          align: "center",
-        }
-      );
-  }
+  doc.moveTo(375, doc.y - 5)
+    .lineTo(525, doc.y - 5)
+    .strokeColor(navy)
+    .stroke();
 
   doc.end();
 
