@@ -2,12 +2,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Plus, FileText, RefreshCw } from "lucide-react";
+import QuotationForm from "../components/QuotationForm";
 
 function Quotations() {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
+  // Fetch quotations
   const fetchQuotations = async () => {
     try {
       setLoading(true);
@@ -25,12 +28,14 @@ function Quotations() {
       );
 
       const data = response.data.data;
+
       setQuotations(
         Array.isArray(data) ? data : data?.quotations || []
       );
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to load quotations."
+        err.response?.data?.message ||
+          "Failed to load quotations."
       );
     } finally {
       setLoading(false);
@@ -41,8 +46,15 @@ function Quotations() {
     fetchQuotations();
   }, []);
 
+  // Handle successful creation
+  const handleSuccess = () => {
+    setShowForm(false);
+    fetchQuotations();
+  };
+
   return (
     <div className="space-y-6">
+
       {/* Page Heading */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -55,6 +67,7 @@ function Quotations() {
         </div>
 
         <button
+          onClick={() => setShowForm(true)}
           className="flex items-center gap-2 rounded-lg bg-awadh-gold px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
         >
           <Plus size={18} />
@@ -83,7 +96,9 @@ function Quotations() {
             Loading quotations...
           </p>
         ) : error ? (
-          <p className="p-8 text-center text-red-600">{error}</p>
+          <p className="p-8 text-center text-red-600">
+            {error}
+          </p>
         ) : quotations.length === 0 ? (
           <div className="p-12 text-center">
             <FileText
@@ -116,17 +131,21 @@ function Quotations() {
                     <td className="p-4 font-medium text-slate-900">
                       {quotation.quotationNumber}
                     </td>
+
                     <td className="p-4">
                       {quotation.customerId?.name || "Customer"}
                     </td>
+
                     <td className="p-4 font-medium">
                       ₹{Number(quotation.total || 0).toLocaleString("en-IN")}
                     </td>
+
                     <td className="p-4">
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
                         {quotation.status}
                       </span>
                     </td>
+
                     <td className="p-4 text-slate-500">
                       {new Date(quotation.createdAt).toLocaleDateString("en-IN")}
                     </td>
@@ -137,6 +156,14 @@ function Quotations() {
           </div>
         )}
       </div>
+
+      {/* Create Quotation Modal */}
+      {showForm && (
+        <QuotationForm
+          onClose={() => setShowForm(false)}
+          onSuccess={handleSuccess}
+        />
+      )}
     </div>
   );
 }
