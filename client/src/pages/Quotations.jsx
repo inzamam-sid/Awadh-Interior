@@ -6,6 +6,10 @@ import {
   FileText,
   RefreshCw,
   Download,
+  Eye,
+  Send,
+  Trash2,
+  X,
 } from "lucide-react";
 import QuotationForm from "../components/QuotationForm";
 
@@ -14,7 +18,10 @@ function Quotations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
-
+  const [selectedQuotation, setSelectedQuotation] = useState(null);
+const [detailsLoading, setDetailsLoading] = useState(false);
+const [actionLoading, setActionLoading] = useState("");
+ 
   // Fetch quotations
   const fetchQuotations = async () => {
     try {
@@ -85,6 +92,89 @@ function Quotations() {
         alert("Unable to download quotation PDF.");
     }
     };
+
+
+const getAuthConfig = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+});
+
+// View quotation details
+const handleView = async (quotation) => {
+  try {
+    setDetailsLoading(true);
+    setSelectedQuotation(null);
+
+    const response = await axios.get(
+      `http://localhost:5000/api/v1/quotations/${quotation._id}`,
+      getAuthConfig()
+    );
+
+    setSelectedQuotation(response.data.data);
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+      "Unable to load quotation details."
+    );
+  } finally {
+    setDetailsLoading(false);
+  }
+};
+
+// Send quotation
+const handleSend = async (quotation) => {
+  if (!window.confirm(`Send quotation ${quotation.quotationNumber}?`)) {
+    return;
+  }
+
+  try {
+    setActionLoading(quotation._id);
+
+    await axios.patch(
+      `http://localhost:5000/api/v1/quotations/${quotation._id}/send`,
+      {},
+      getAuthConfig()
+    );
+
+    await fetchQuotations();
+    alert("Quotation sent successfully!");
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+      "Unable to send quotation."
+    );
+  } finally {
+    setActionLoading("");
+  }
+};
+
+// Delete quotation
+const handleDelete = async (quotation) => {
+  if (!window.confirm(`Delete quotation ${quotation.quotationNumber}? This cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    setActionLoading(quotation._id);
+
+    await axios.delete(
+      `http://localhost:5000/api/v1/quotations/${quotation._id}`,
+      getAuthConfig()
+    );
+
+    await fetchQuotations();
+    alert("Quotation deleted successfully!");
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+      "Unable to delete quotation."
+    );
+  } finally {
+    setActionLoading("");
+  }
+};
+
 
 
 
@@ -163,51 +253,90 @@ function Quotations() {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-600">
                 <tr>
-                  <th className="p-4">Quotation No.</th>
-                  <th className="p-4">Customer</th>
-                  <th className="p-4">Total Amount</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Date</th>
-                  <th className="p-4">Actions</th>
+                    <th className="p-4">Quotation No.</th>
+                    <th className="p-4">Customer</th>
+                    <th className="p-4">Total Amount</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Actions</th>
                 </tr>
-              </thead>
+                </thead>
 
-              <tbody className="divide-y divide-slate-100">
+              
+                <tbody className="divide-y divide-slate-100">
                 {quotations.map((quotation) => (
-                  <tr key={quotation._id}>
+                    <tr key={quotation._id}>
                     <td className="p-4 font-medium text-slate-900">
-                      {quotation.quotationNumber}
+                        {quotation.quotationNumber}
                     </td>
 
                     <td className="p-4">
-                      {quotation.customerId?.name || "Customer"}
+                        {quotation.customerId?.name || "Customer"}
                     </td>
 
                     <td className="p-4 font-medium">
-                      ₹{Number(quotation.total || 0).toLocaleString("en-IN")}
+                        ₹{Number(quotation.total || 0).toLocaleString("en-IN")}
                     </td>
 
                     <td className="p-4">
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
                         {quotation.status}
-                      </span>
+                        </span>
                     </td>
 
                     <td className="p-4 text-slate-500">
-                      {new Date(quotation.createdAt).toLocaleDateString("en-IN")}
+                        {new Date(quotation.createdAt).toLocaleDateString("en-IN")}
                     </td>
+
                     <td className="p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                        {/* View */}
+                        <button
+                            onClick={() => handleView(quotation)}
+                            title="View Details"
+                            className="rounded-lg border p-2 text-slate-600 hover:border-blue-400 hover:text-blue-600"
+                        >
+                            <Eye size={16} />
+                        </button>
+
+                        {/* Download PDF */}
                         <button
                             onClick={() => handleDownload(quotation)}
-                            className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-awadh-gold hover:text-awadh-gold"
+                            title="Download PDF"
+                            className="rounded-lg border p-2 text-slate-600 hover:border-awadh-gold hover:text-awadh-gold"
                         >
                             <Download size={16} />
-                            Download PDF
                         </button>
+
+                        {/* Send - only for DRAFT */}
+                        {quotation.status === "DRAFT" && (
+                            <button
+                            onClick={() => handleSend(quotation)}
+                            disabled={actionLoading === quotation._id}
+                            title="Send Quotation"
+                            className="rounded-lg border p-2 text-green-600 hover:border-green-400 disabled:opacity-50"
+                            >
+                            <Send size={16} />
+                            </button>
+                        )}
+
+                        {/* Delete - only for DRAFT */}
+                        {quotation.status === "DRAFT" && (
+                            <button
+                            onClick={() => handleDelete(quotation)}
+                            disabled={actionLoading === quotation._id}
+                            title="Delete Quotation"
+                            className="rounded-lg border p-2 text-red-600 hover:border-red-400 disabled:opacity-50"
+                            >
+                            <Trash2 size={16} />
+                            </button>
+                        )}
+                        </div>
                     </td>
-                  </tr>
+                    </tr>
                 ))}
-              </tbody>
+                </tbody>
+
             </table>
           </div>
         )}
