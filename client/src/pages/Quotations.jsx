@@ -1,7 +1,12 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Plus, FileText, RefreshCw } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  RefreshCw,
+  Download,
+} from "lucide-react";
 import QuotationForm from "../components/QuotationForm";
 
 function Quotations() {
@@ -41,6 +46,47 @@ function Quotations() {
       setLoading(false);
     }
   };
+
+
+
+    const handleDownload = async (quotation) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await axios.get(
+        `http://localhost:5000/api/v1/quotations/${quotation._id}/pdf`,
+        {
+            headers: {
+            Authorization: `Bearer ${token}`,
+            },
+            responseType: "blob",
+        }
+        );
+
+        // Create a temporary download link
+        const file = new Blob([response.data], {
+        type: "application/pdf",
+        });
+
+        const url = window.URL.createObjectURL(file);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${quotation.quotationNumber}.pdf`;
+
+        document.body.appendChild(link);
+        link.click();
+
+        link.remove();
+        window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+        console.error("PDF download failed:", error);
+        alert("Unable to download quotation PDF.");
+    }
+    };
+
+
 
   useEffect(() => {
     fetchQuotations();
@@ -122,6 +168,7 @@ function Quotations() {
                   <th className="p-4">Total Amount</th>
                   <th className="p-4">Status</th>
                   <th className="p-4">Date</th>
+                  <th className="p-4">Actions</th>
                 </tr>
               </thead>
 
@@ -148,6 +195,15 @@ function Quotations() {
 
                     <td className="p-4 text-slate-500">
                       {new Date(quotation.createdAt).toLocaleDateString("en-IN")}
+                    </td>
+                    <td className="p-4">
+                        <button
+                            onClick={() => handleDownload(quotation)}
+                            className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-awadh-gold hover:text-awadh-gold"
+                        >
+                            <Download size={16} />
+                            Download PDF
+                        </button>
                     </td>
                   </tr>
                 ))}
