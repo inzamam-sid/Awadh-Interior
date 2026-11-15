@@ -10,6 +10,7 @@ import {
   Send,
   Trash2,
   X,
+  Pencil,
 } from "lucide-react";
 import QuotationForm from "../components/QuotationForm";
 
@@ -19,8 +20,9 @@ function Quotations() {
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState(null);
-const [detailsLoading, setDetailsLoading] = useState(false);
-const [actionLoading, setActionLoading] = useState("");
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState("");
+  const [editingQuotation, setEditingQuotation] = useState(null);
  
   // Fetch quotations
   const fetchQuotations = async () => {
@@ -122,6 +124,28 @@ const handleView = async (quotation) => {
   }
 };
 
+// Open quotation for editing
+const handleEdit = async (quotation) => {
+  try {
+    setDetailsLoading(true);
+
+    const response = await axios.get(
+      `http://localhost:5000/api/v1/quotations/${quotation._id}`,
+      getAuthConfig()
+    );
+
+    setEditingQuotation(response.data.data);
+    setShowForm(true);
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+        "Unable to load quotation for editing."
+    );
+  } finally {
+    setDetailsLoading(false);
+  }
+};
+
 // Send quotation
 const handleSend = async (quotation) => {
   if (!window.confirm(`Send quotation ${quotation.quotationNumber}?`)) {
@@ -185,6 +209,7 @@ const handleDelete = async (quotation) => {
   // Handle successful creation
   const handleSuccess = () => {
     setShowForm(false);
+    setEditingQuotation(null);
     fetchQuotations();
   };
 
@@ -203,7 +228,10 @@ const handleDelete = async (quotation) => {
         </div>
 
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingQuotation(null);
+            setShowForm(true);
+          }}
           className="flex items-center gap-2 rounded-lg bg-awadh-gold px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
         >
           <Plus size={18} />
@@ -331,6 +359,19 @@ const handleDelete = async (quotation) => {
                             <Trash2 size={16} />
                             </button>
                         )}
+
+                        {/* Edit - only for DRAFT */}
+{quotation.status === "DRAFT" && (
+  <button
+    onClick={() => handleEdit(quotation)}
+    disabled={actionLoading === quotation._id}
+    title="Edit Quotation"
+    className="rounded-lg border p-2 text-blue-600 hover:border-blue-400 disabled:opacity-50"
+  >
+    <Pencil size={16} />
+  </button>
+)}
+
                         </div>
                     </td>
                     </tr>
@@ -345,7 +386,11 @@ const handleDelete = async (quotation) => {
       {/* Create Quotation Modal */}
       {showForm && (
         <QuotationForm
-          onClose={() => setShowForm(false)}
+          quotation={editingQuotation}
+          onClose={() => {
+            setShowForm(false);
+            setEditingQuotation(null);
+          }}
           onSuccess={handleSuccess}
         />
       )}

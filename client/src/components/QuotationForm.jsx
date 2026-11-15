@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Plus, Trash2, X } from "lucide-react";
 
-function QuotationForm({ onClose, onSuccess }) {
+function QuotationForm({ onClose, onSuccess, quotation = null }) {
+  const isEditMode = Boolean(quotation);
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -11,23 +12,35 @@ function QuotationForm({ onClose, onSuccess }) {
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    customerId: "",
-    projectId: "",
-    discount: 0,
-    taxRate: 0,
-    terms: "",
-    validUntil: "",
-  });
+  customerId: quotation?.customerId?._id || quotation?.customerId || "",
+  projectId: quotation?.projectId?._id || quotation?.projectId || "",
+  discount: quotation?.discount || 0,
+  taxRate: quotation?.taxRate || 0,
+  terms: quotation?.terms || "",
+  validUntil: quotation?.validUntil
+    ? new Date(quotation.validUntil).toISOString().split("T")[0]
+    : "",
+});
 
-  const [items, setItems] = useState([
-    {
-      description: "",
-      category: "",
-      quantity: 1,
-      unit: "sq ft",
-      rate: 0,
-    },
-  ]);
+  const [items, setItems] = useState(
+  quotation?.items?.length
+    ? quotation.items.map((item) => ({
+        description: item.description || "",
+        category: item.category || "",
+        quantity: item.quantity || 1,
+        unit: item.unit || "sq ft",
+        rate: item.rate || 0,
+      }))
+    : [
+        {
+          description: "",
+          category: "",
+          quantity: 1,
+          unit: "sq ft",
+          rate: 0,
+        },
+      ]
+);
 
   const token = localStorage.getItem("token");
 
@@ -126,26 +139,43 @@ function QuotationForm({ onClose, onSuccess }) {
           quantity: Number(item.quantity),
           rate: Number(item.rate),
         })),
-        discount,
-        taxRate,
+        discount: Number(formData.discount) || 0,
+        taxRate: Number(formData.taxRate) || 0,
       };
 
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/quotations",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      let response;
+
+      if (isEditMode) {
+        // Update existing quotation
+        response = await axios.patch(
+          `http://localhost:5000/api/v1/quotations/${quotation._id}`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } else {
+        // Create new quotation
+        response = await axios.post(
+          "http://localhost:5000/api/v1/quotations",
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
 
       onSuccess(response.data);
       onClose();
+
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Failed to create quotation."
+          "Failed to save quotation."
       );
     } finally {
       setSaving(false);
@@ -164,10 +194,12 @@ function QuotationForm({ onClose, onSuccess }) {
         <div className="sticky top-0 flex items-center justify-between border-b bg-white p-5">
           <div>
             <h2 className="text-xl font-bold text-awadh-navy">
-              Create Quotation
+              {isEditMode ? "Edit Quotation" : "Create Quotation"}
             </h2>
             <p className="text-sm text-slate-500">
-              Prepare a new customer quotation.
+              {isEditMode
+                ? "Update the existing customer quotation."
+                : "Prepare a new customer quotation."}
             </p>
           </div>
 
@@ -436,7 +468,11 @@ function QuotationForm({ onClose, onSuccess }) {
               disabled={saving}
               className="rounded-lg bg-awadh-gold px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Save Quotation"}
+              {saving
+                ? "Saving..."
+                : isEditMode
+                ? "Update Quotation"
+                : "Save Quotation"}
             </button>
           </div>
         </form>
