@@ -16,16 +16,29 @@ import progressRoutes from "./modules/progress/progress.routes.js";
 import quotationRoutes from "./modules/quotations/quotation.routes.js";
 
 const app = express();
-// Allow requests from the React frontend
+
 app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
+    methods: [
+      "GET",
+      "HEAD",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+    optionsSuccessStatus: 204,
   })
 );
 
 app.use(express.json());
-
 app.use(cookieParser());
 
 app.get("/api/v1/health", (req, res) => {
