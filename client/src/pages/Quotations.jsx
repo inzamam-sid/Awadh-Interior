@@ -349,6 +349,144 @@ const handleDelete = async (quotation) => {
           onSuccess={handleSuccess}
         />
       )}
+
+
+    {detailsLoading && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="rounded-xl bg-white p-6">
+        Loading quotation details...
+        </div>
+    </div>
+    )}
+
+    {selectedQuotation && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white">
+
+        <div className="flex items-center justify-between border-b p-5">
+            <div>
+            <h2 className="text-xl font-bold text-awadh-navy">
+                Quotation Details
+            </h2>
+            <p className="text-sm text-slate-500">
+                {selectedQuotation.quotationNumber}
+            </p>
+            </div>
+
+            <button onClick={() => setSelectedQuotation(null)}>
+            <X size={22} />
+            </button>
+        </div>
+
+        <div className="space-y-5 p-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+                <p className="text-sm text-slate-500">Customer</p>
+                <p className="font-semibold">
+                {selectedQuotation.customerId?.name || "Customer"}
+                </p>
+            </div>
+
+            <div>
+                <p className="text-sm text-slate-500">Status</p>
+                <p className="font-semibold">
+                {selectedQuotation.status}
+                </p>
+            </div>
+
+            <div>
+                <p className="text-sm text-slate-500">Quotation Date</p>
+                <p className="font-medium">
+                {new Date(selectedQuotation.createdAt).toLocaleDateString("en-IN")}
+                </p>
+            </div>
+
+            <div>
+                <p className="text-sm text-slate-500">Valid Until</p>
+                <p className="font-medium">
+                {selectedQuotation.validUntil
+                    ? new Date(selectedQuotation.validUntil).toLocaleDateString("en-IN")
+                    : "Not specified"}
+                </p>
+            </div>
+            </div>
+
+            <div>
+            <h3 className="mb-3 font-semibold">Quotation Items</h3>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                <thead className="bg-slate-50">
+                    <tr>
+                    <th className="p-3 text-left">Description</th>
+                    <th className="p-3 text-right">Quantity</th>
+                    <th className="p-3 text-right">Rate</th>
+                    <th className="p-3 text-right">Amount</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {(selectedQuotation.items || []).map((item, index) => (
+                    <tr key={index} className="border-b">
+                        <td className="p-3">{item.description}</td>
+                        <td className="p-3 text-right">
+                        {item.quantity} {item.unit}
+                        </td>
+                        <td className="p-3 text-right">
+                        ₹{Number(item.rate).toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-3 text-right">
+                        ₹{Number(item.amount).toLocaleString("en-IN")}
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            </div>
+            </div>
+
+            <div className="ml-auto max-w-xs space-y-2 rounded-lg bg-slate-50 p-4 text-sm">
+            <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>₹{Number(selectedQuotation.subtotal || 0).toLocaleString("en-IN")}</span>
+            </div>
+
+            <div className="flex justify-between">
+                <span>Discount</span>
+                <span>₹{Number(selectedQuotation.discount || 0).toLocaleString("en-IN")}</span>
+            </div>
+
+            <div className="flex justify-between">
+                <span>Tax</span>
+                <span>₹{Number(selectedQuotation.taxAmount || 0).toLocaleString("en-IN")}</span>
+            </div>
+
+            <div className="flex justify-between border-t pt-2 font-bold">
+                <span>Total</span>
+                <span>₹{Number(selectedQuotation.total || 0).toLocaleString("en-IN")}</span>
+            </div>
+            </div>
+
+            <div>
+            <h3 className="font-semibold">Terms and Conditions</h3>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                {selectedQuotation.terms || "No terms specified."}
+            </p>
+            </div>
+        </div>
+
+        <div className="flex justify-end border-t p-5">
+            <button
+            onClick={() => setSelectedQuotation(null)}
+            className="rounded-lg bg-awadh-navy px-5 py-2 text-white"
+            >
+            Close
+            </button>
+        </div>
+        </div>
+    </div>
+    )}
+
     </div>
   );
 }
