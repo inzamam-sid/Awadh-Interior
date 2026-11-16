@@ -11,6 +11,8 @@ import {
   Trash2,
   X,
   Pencil,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import QuotationForm from "../components/QuotationForm";
 
@@ -170,6 +172,53 @@ const handleSend = async (quotation) => {
     );
   } finally {
     setActionLoading("");
+  }
+};
+
+
+const handleAccept = async (id) => {
+  try {
+    setActionLoading(id);
+
+    await axios.patch(
+      `http://localhost:5000/api/v1/quotations/${id}/accept`,
+      {},
+      getAuthConfig()
+    );
+
+    await fetchQuotations();
+  } catch (err) {
+    alert(
+      err.response?.data?.message || "Failed to accept quotation."
+    );
+  } finally {
+    setActionLoading(null);
+  }
+};
+
+const handleReject = async (id) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to reject this quotation?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setActionLoading(id);
+
+    await axios.patch(
+      `http://localhost:5000/api/v1/quotations/${id}/reject`,
+      {},
+      getAuthConfig()
+    );
+
+    await fetchQuotations();
+  } catch (err) {
+    alert(
+      err.response?.data?.message || "Failed to reject quotation."
+    );
+  } finally {
+    setActionLoading(null);
   }
 };
 
@@ -361,15 +410,37 @@ const handleDelete = async (quotation) => {
                         )}
 
                         {/* Edit - only for DRAFT */}
-{quotation.status === "DRAFT" && (
-  <button
-    onClick={() => handleEdit(quotation)}
-    disabled={actionLoading === quotation._id}
-    title="Edit Quotation"
-    className="rounded-lg border p-2 text-blue-600 hover:border-blue-400 disabled:opacity-50"
-  >
-    <Pencil size={16} />
-  </button>
+                        {quotation.status === "DRAFT" && (
+                          <button
+                            onClick={() => handleEdit(quotation)}
+                            disabled={actionLoading === quotation._id}
+                            title="Edit Quotation"
+                            className="rounded-lg border p-2 text-blue-600 hover:border-blue-400 disabled:opacity-50"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                        )}
+
+                        {quotation.status === "SENT" && (
+  <>
+    <button
+      onClick={() => handleAccept(quotation._id)}
+      disabled={actionLoading === quotation._id}
+      title="Accept Quotation"
+      className="p-2 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 disabled:opacity-50"
+    >
+      <CheckCircle size={18} />
+    </button>
+
+    <button
+      onClick={() => handleReject(quotation._id)}
+      disabled={actionLoading === quotation._id}
+      title="Reject Quotation"
+      className="p-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+    >
+      <XCircle size={18} />
+    </button>
+  </>
 )}
 
                         </div>
