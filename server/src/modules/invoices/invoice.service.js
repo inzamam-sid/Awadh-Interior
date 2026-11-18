@@ -260,3 +260,57 @@ export const getInvoiceById = async ({
 
   return invoice;
 };
+
+
+// Update an existing draft invoice
+export const updateInvoice = async ({
+  organizationId,
+  invoiceId,
+  data,
+}) => {
+  validateObjectId(
+    invoiceId,
+    "INVALID_INVOICE_ID",
+    "Invalid invoice ID."
+  );
+
+  const invoice = await Invoice.findOne({
+    _id: invoiceId,
+    organizationId,
+  });
+
+  if (!invoice) {
+    throw new ApiError(
+      404,
+      "INVOICE_NOT_FOUND",
+      "Invoice not found."
+    );
+  }
+
+  // Only draft invoices can be updated
+  if (invoice.status !== "DRAFT") {
+    throw new ApiError(
+      409,
+      "INVOICE_NOT_EDITABLE",
+      "Only draft invoices can be updated."
+    );
+  }
+
+  // Update allowed fields
+  if (data.dueDate !== undefined) {
+    invoice.dueDate = data.dueDate;
+  }
+
+  if (data.notes !== undefined) {
+    invoice.notes = data.notes;
+  }
+
+  // Allow issuing a draft invoice
+  if (data.status !== undefined) {
+    invoice.status = data.status;
+  }
+
+  await invoice.save();
+
+  return invoice;
+};
