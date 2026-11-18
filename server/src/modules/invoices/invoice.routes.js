@@ -17,11 +17,20 @@ import {
   updateInvoiceSchema,
 } from "./invoice.validation.js";
 
+import { downloadInvoicePdfController } from "./invoice-pdf.controller.js";
+
 import { PERMISSIONS } from "../../config/permissions.js";
 
 const router = Router();
 
 router.use(authMiddleware);
+
+// Download invoice PDF
+router.get(
+  "/:id/pdf",
+  requirePermission(PERMISSIONS.INVOICE_VIEW),
+  downloadInvoicePdfController
+);
 
 // Get all invoices
 router.get(
