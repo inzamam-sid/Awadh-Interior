@@ -25,21 +25,25 @@ export const createPaymentController = async (req, res, next) => {
 };
 
 // Get all payments
+
 export const getPaymentsController = async (req, res, next) => {
   try {
     const payments = await getPayments({
       organizationId: req.user.organizationId,
       invoiceId: req.query.invoiceId,
+      customerId: req.query.customerId,
     });
 
     res.status(200).json({
       success: true,
+      count: payments.length,
       data: payments,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Get payment by ID
 export const getPaymentByIdController = async (req, res, next) => {
