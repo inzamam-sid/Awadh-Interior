@@ -15,6 +15,7 @@ import milestoneRoutes from "./modules/milestones/milestone.routes.js";
 import progressRoutes from "./modules/progress/progress.routes.js";
 import quotationRoutes from "./modules/quotations/quotation.routes.js";
 import invoiceRoutes from "./modules/invoices/invoice.routes.js";
+import paymentRoutes from "./modules/payments/payment.routes.js";
 
 const app = express();
 
@@ -107,6 +108,11 @@ app.use(
 app.use(
   "/api/v1/invoices", 
   invoiceRoutes
+);
+
+app.use(
+  "/api/v1/payments", 
+  paymentRoutes
 );
 
 app.use(errorMiddleware);
