@@ -125,9 +125,11 @@ export const createPayment = async ({
 };
 
 // Get all payments
+
 export const getPayments = async ({
   organizationId,
   invoiceId,
+  customerId,
 }) => {
   const filter = { organizationId };
 
@@ -135,12 +137,17 @@ export const getPayments = async ({
     filter.invoiceId = invoiceId;
   }
 
+  if (customerId) {
+    filter.customerId = customerId;
+  }
+
   return Payment.find(filter)
     .populate("invoiceId", "invoiceNumber total")
-    .populate("customerId", "name phone")
+    .populate("customerId", "name phone email")
     .populate("receivedBy", "name email")
-    .sort({ createdAt: -1 });
+    .sort({ paymentDate: -1 });
 };
+
 
 // Get payment by ID
 export const getPaymentById = async ({
