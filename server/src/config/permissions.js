@@ -82,6 +82,9 @@ export const PERMISSIONS = {
   REVIEW_MANAGE: "review:manage",
   BLOG_MANAGE: "blog:manage",
 
+  // Dashboard
+  DASHBOARD_VIEW: "dashboard:view",
+
   // Analytics
   ANALYTICS_VIEW: "analytics:view",
 
