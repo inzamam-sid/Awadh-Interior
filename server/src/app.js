@@ -16,6 +16,7 @@ import progressRoutes from "./modules/progress/progress.routes.js";
 import quotationRoutes from "./modules/quotations/quotation.routes.js";
 import invoiceRoutes from "./modules/invoices/invoice.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
+import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 
 const app = express();
 
@@ -113,6 +114,11 @@ app.use(
 app.use(
   "/api/v1/payments", 
   paymentRoutes
+);
+
+app.use(
+  "/api/v1/dashboard", 
+  dashboardRoutes
 );
 
 app.use(errorMiddleware);
