@@ -60,6 +60,21 @@ export const getDashboardStats = async (organizationId) => {
     0
   );
 
+  const totalOutstanding = invoices.reduce(
+    (sum, invoice) => sum + invoice.balanceDue,
+    0
+  );
+
+  const totalBilled = invoices.reduce(
+    (sum, invoice) => sum + invoice.total,
+    0
+  );
+
+  const collectionRate =
+    totalBilled > 0
+      ? Number(((totalRevenue / totalBilled) * 100).toFixed(2))
+      : 0;
+
   // Project activities
   const projectActivities = recentProjects.map((project) => ({
     type: "PROJECT_CREATED",
@@ -121,6 +136,9 @@ export const getDashboardStats = async (organizationId) => {
     totalQuotations,
     totalInvoices,
     totalRevenue,
+    totalOutstanding,
+    totalBilled,
+    collectionRate,
     recentProjects,
     recentInvoices,
     recentActivity,
