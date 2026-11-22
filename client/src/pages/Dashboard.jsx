@@ -112,6 +112,12 @@ function Dashboard() {
       icon: Wallet,
       color: "bg-purple-100 text-purple-700",
     },
+    {
+      title: "Outstanding Payments",
+      value: formatCurrency(dashboardData?.totalOutstanding ?? 0),
+      icon: CircleDollarSign,
+      color: "bg-red-100 text-red-700",
+    },
   ];
 
   if (loading) {
@@ -158,7 +164,7 @@ function Dashboard() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
 
@@ -182,6 +188,82 @@ function Dashboard() {
             </div>
           );
         })}
+      </div>
+
+      {/* Financial Overview */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-awadh-navy">
+            Financial Overview
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Billing and payment collection summary
+          </p>
+        </div>
+
+        {/* Financial Metrics */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+          {/* Total Billed */}
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Total Billed</p>
+            <h3 className="mt-2 text-xl font-bold text-awadh-navy">
+              {formatCurrency(dashboardData?.totalBilled ?? 0)}
+            </h3>
+          </div>
+
+          {/* Collected */}
+          <div className="rounded-xl bg-green-50 p-4">
+            <p className="text-sm text-green-700">Collected</p>
+            <h3 className="mt-2 text-xl font-bold text-green-800">
+              {formatCurrency(dashboardData?.totalRevenue ?? 0)}
+            </h3>
+          </div>
+
+          {/* Outstanding */}
+          <div className="rounded-xl bg-red-50 p-4">
+            <p className="text-sm text-red-700">Outstanding</p>
+            <h3 className="mt-2 text-xl font-bold text-red-800">
+              {formatCurrency(dashboardData?.totalOutstanding ?? 0)}
+            </h3>
+          </div>
+
+          {/* Collection Rate */}
+          <div className="rounded-xl bg-amber-50 p-4">
+            <p className="text-sm text-amber-700">Collection Rate</p>
+            <h3 className="mt-2 text-xl font-bold text-amber-800">
+              {dashboardData?.collectionRate ?? 0}%
+            </h3>
+          </div>
+
+        </div>
+
+        {/* Collection Progress */}
+        <div className="mt-8">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">
+              Payment Collection Progress
+            </h3>
+
+            <span className="text-sm font-bold text-green-700">
+              {dashboardData?.collectionRate ?? 0}%
+            </span>
+          </div>
+
+          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-green-500 transition-all duration-700"
+              style={{
+                width: `${Math.min(dashboardData?.collectionRate ?? 0, 100)}%`,
+              }}
+            />
+          </div>
+
+          <p className="mt-2 text-xs text-slate-500">
+            {formatCurrency(dashboardData?.totalRevenue ?? 0)} collected out of{" "}
+            {formatCurrency(dashboardData?.totalBilled ?? 0)} total billed.
+          </p>
+        </div>
       </div>
 
       {/* Recent Projects & Recent Activity */}
