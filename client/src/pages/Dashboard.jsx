@@ -57,7 +57,7 @@ const getActivityIcon = (type) => {
   }
 };
 
-function Dashboard() {
+function Dashboard({ setActivePage }) {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -171,7 +171,16 @@ function Dashboard() {
           return (
             <div
               key={stat.title}
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              onClick={() => {
+                if (stat.title === "Quotations") {
+                  setActivePage("Quotations");
+                }
+              }}
+              className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${
+                stat.title === "Quotations"
+                  ? "cursor-pointer hover:shadow-md transition-all"
+                  : ""
+              }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
