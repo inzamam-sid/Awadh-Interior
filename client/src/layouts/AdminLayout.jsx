@@ -3,10 +3,24 @@ import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import Quotations from "../pages/Quotations";
+import Dashboard from "../pages/Dashboard";
 
-function AdminLayout({ children, user, onLogout }) {
+function AdminLayout({ user, onLogout }) {
   const [activePage, setActivePage] = useState("Dashboard");
   const [open, setOpen] = useState(false);
+
+  const renderPage = () => {
+    switch (activePage) {
+      case "Dashboard":
+        return <Dashboard setActivePage={setActivePage} />;
+
+      case "Quotations":
+        return <Quotations />;
+
+      default:
+        return <Dashboard setActivePage={setActivePage} />;
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -26,11 +40,7 @@ function AdminLayout({ children, user, onLogout }) {
         />
 
         <main className="p-4 sm:p-6 lg:p-8">
-          {activePage === "Quotations" ? (
-            <Quotations />
-          ) : (
-            children
-          )}
+          {renderPage()}
         </main>
       </div>
     </div>
