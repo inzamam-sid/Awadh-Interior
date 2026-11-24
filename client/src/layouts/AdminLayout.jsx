@@ -4,6 +4,7 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import Quotations from "../pages/Quotations";
 import Dashboard from "../pages/Dashboard";
+import Invoices from "../pages/Invoices";
 
 function AdminLayout({ user, onLogout }) {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -16,6 +17,9 @@ function AdminLayout({ user, onLogout }) {
 
       case "Quotations":
         return <Quotations />;
+
+      case "Invoices":
+        return <Invoices />;
 
       default:
         return <Dashboard setActivePage={setActivePage} />;
