@@ -246,11 +246,11 @@ function Invoices() {
                     </td>
 
                     <td className="px-5 py-4 text-slate-700">
-                      {invoice.customer?.name || "—"}
+                      {invoice.customerId?.name || "—"}
                     </td>
 
                     <td className="px-5 py-4 text-slate-600">
-                      {invoice.project?.name || "—"}
+                      {invoice.projectId?.name || "—"}
                     </td>
 
                     <td className="px-5 py-4 text-slate-600">
