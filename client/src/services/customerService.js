@@ -13,3 +13,15 @@ export const getCustomers = async () => {
 
   return response.data.data;
 };
+
+export const createCustomer = async (customerData) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(API_URL, customerData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data.data;
+};
