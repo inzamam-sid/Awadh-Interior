@@ -309,7 +309,7 @@ export const updateEmployee =
         },
         updateData,
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       ).populate(
