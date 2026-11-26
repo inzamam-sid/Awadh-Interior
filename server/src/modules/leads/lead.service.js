@@ -209,7 +209,7 @@ export const updateLead = async ({
       updatedBy: userId,
     },
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }
   ).populate(
