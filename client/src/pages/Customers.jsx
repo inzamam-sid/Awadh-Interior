@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { getCustomers, createCustomer } from "../services/customerService";
+import { getCustomers, createCustomer, updateCustomer, } from "../services/customerService";
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -9,6 +9,8 @@ function Customers() {
   const [search, setSearch] = useState("");
 
   const [showForm, setShowForm] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -62,6 +64,55 @@ function Customers() {
       ...prev,
       [name]: value,
     }));
+  }
+};
+
+const openEditForm = (customer) => {
+  setEditingCustomer(customer);
+  setSelectedCustomer(null);
+  setShowForm(true);
+  setFormError("");
+
+  setFormData({
+    name: customer.name || "",
+    phone: customer.phone || "",
+    email: customer.email || "",
+    propertyType: customer.propertyType || "Residential",
+    source: customer.source || "WEBSITE",
+    address: {
+      street: customer.address?.street || "",
+      city: customer.address?.city || "",
+      state: customer.address?.state || "",
+      pincode: customer.address?.pincode || "",
+      country: customer.address?.country || "India",
+    },
+    notes: customer.notes || "",
+    tags: customer.tags || [],
+  });
+};
+
+const handleEditCustomer = async (e) => {
+  e.preventDefault();
+
+  try {
+    setFormLoading(true);
+    setFormError("");
+
+    await updateCustomer(editingCustomer._id, formData);
+
+    setEditingCustomer(null);
+    setShowForm(false);
+    setSelectedCustomer(null);
+
+    await fetchCustomers();
+  } catch (err) {
+    console.error("Error updating customer:", err);
+
+    setFormError(
+      err.response?.data?.message || "Failed to update customer."
+    );
+  } finally {
+    setFormLoading(false);
   }
 };
 
@@ -183,6 +234,189 @@ const handleCreateCustomer = async (e) => {
     );
   }
 
+if (selectedCustomer) {
+  const customer = selectedCustomer;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Customer Details
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Complete customer information
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => openEditForm(customer)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+          >
+            Edit Customer
+          </button>
+
+          <button
+            onClick={() => setSelectedCustomer(null)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            ← Back to Customers
+          </button>
+        </div>
+      </div>
+
+      {/* Customer Profile */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl font-bold">
+            {customer.name?.charAt(0).toUpperCase()}
+          </div>
+
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">
+              {customer.name}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {customer.propertyType || "Property type not specified"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Information */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-800 mb-4">
+          Contact Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <p className="text-sm text-slate-500">Phone</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.phone || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">Email</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.email || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">Property Type</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.propertyType || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">Lead Source</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {formatSource(customer.source)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Address Information */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-800 mb-4">
+          Address Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <p className="text-sm text-slate-500">Street / Area</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.address?.street || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">City</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.address?.city || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">State</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.address?.state || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">PIN Code</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.address?.pincode || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">Country</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {customer.address?.country || "—"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Information */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-800 mb-4">
+          Additional Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <p className="text-sm text-slate-500">Customer Since</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {formatDate(customer.createdAt)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">Lead Source</p>
+            <p className="font-medium text-slate-800 mt-1">
+              {formatSource(customer.source)}
+            </p>
+          </div>
+        </div>
+
+        {customer.notes && (
+          <div className="mt-5">
+            <p className="text-sm text-slate-500">Notes</p>
+            <p className="text-slate-800 mt-1 whitespace-pre-wrap">
+              {customer.notes}
+            </p>
+          </div>
+        )}
+
+        {customer.tags?.length > 0 && (
+          <div className="mt-5">
+            <p className="text-sm text-slate-500 mb-2">Tags</p>
+            <div className="flex flex-wrap gap-2">
+              {customer.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -220,7 +454,7 @@ const handleCreateCustomer = async (e) => {
             <div className="flex items-center justify-between mb-6">
             <div>
                 <h2 className="text-lg font-semibold text-slate-800">
-                Add New Customer
+                {editingCustomer ? "Edit Customer" : "Add New Customer"}
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
                 Enter the customer details below.
@@ -239,7 +473,10 @@ const handleCreateCustomer = async (e) => {
             </button>
             </div>
 
-            <form onSubmit={handleCreateCustomer} className="space-y-6">
+            <form
+              onSubmit={editingCustomer ? handleEditCustomer : handleCreateCustomer}
+              className="space-y-6"
+            >
             {/* Basic Information */}
             <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-3">
@@ -400,7 +637,14 @@ const handleCreateCustomer = async (e) => {
                 disabled={formLoading}
                 className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
                 >
-                {formLoading ? "Creating..." : "Create Customer"}
+                {formLoading
+                  ? editingCustomer
+                    ? "Updating..."
+                    : "Creating..."
+                  : editingCustomer
+                    ? "Update Customer"
+                    : "Create Customer"
+                }
                 </button>
             </div>
             </form>
@@ -495,10 +739,14 @@ const handleCreateCustomer = async (e) => {
                   <tr key={customer._id} className="hover:bg-slate-50 transition-colors">
                     {/* Customer */}
                     <td className="px-5 py-4">
-                      <div className="font-semibold text-slate-800">
+                      <div
+                        onClick={() => setSelectedCustomer(customer)}
+                        className="font-semibold text-slate-800 cursor-pointer hover:text-indigo-600 transition-colors"
+                      >
                         {customer.name}
                       </div>
-                      <div className="text-xs text-slate-500 mt-1">
+
+                      <div className="text-sm text-slate-500">
                         {customer.email || "No email"}
                       </div>
                     </td>
@@ -544,6 +792,7 @@ const handleCreateCustomer = async (e) => {
       </div>
     </div>
   );
+
 }
 
 export default Customers;
