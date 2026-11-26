@@ -120,7 +120,7 @@ export const updateCustomer =
           updatedBy: userId,
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );
