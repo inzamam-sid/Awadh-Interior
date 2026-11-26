@@ -334,7 +334,7 @@ export const getSiteVisitById =
         },
         updateData,
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       )

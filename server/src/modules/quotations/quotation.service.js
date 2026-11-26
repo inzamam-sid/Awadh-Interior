@@ -351,7 +351,7 @@ export const updateQuotation = async ({
   const updatedQuotation = await Quotation.findOneAndUpdate(
     { _id: quotationId, organizationId, status: "DRAFT" },
     updateData,
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true }
   )
     .populate("customerId")
     .populate("projectId", "name projectCode")
@@ -469,7 +469,7 @@ const transitionQuotationStatus = async ({
       status: { $in: allowedStatuses },
     },
     { $set: { status: nextStatus } },
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true }
   )
     .populate("customerId")
     .populate("projectId", "name projectCode")

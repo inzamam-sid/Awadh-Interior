@@ -305,7 +305,7 @@ export const getProjectTasks =
         },
         updateData,
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       )
