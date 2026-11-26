@@ -299,7 +299,7 @@ export const getProjectMilestones =
         },
         updateData,
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );
