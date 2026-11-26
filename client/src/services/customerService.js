@@ -25,3 +25,19 @@ export const createCustomer = async (customerData) => {
 
   return response.data.data;
 };
+
+export const updateCustomer = async (customerId, customerData) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.patch(
+    `${API_URL}/${customerId}`,
+    customerData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data.data;
+};
