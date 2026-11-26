@@ -396,7 +396,7 @@ export const getProjectById =
         },
         updateData,
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       )
